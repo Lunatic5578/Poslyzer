@@ -67,3 +67,7 @@ python app.py
 ## Demo Video - 
 
 ## Live Link -
+
+NOTE: Currently the project only analyzes two postures, 
+i) Squatting Posture
+ii) Sitting Posture
