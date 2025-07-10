@@ -41,3 +41,29 @@ Follow these steps to run the project locally on your machine:
 ```bash
 git clone https://github.com/Lunatic5578/Poslyzer.git
 cd Poslyzer
+```
+##2. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+##3. Install Backend (Node.js) Dependencies
+
+```bash
+cd ../backend/nodeServer
+npm install
+npm start
+```
+### 4. Set Up Flask API for Pose Analysis
+
+```bash
+cd ../pythonApi
+pip install -r requirements.txt
+python app.py
+```
+
+## Demo Video - 
+
+## Live Link -
