@@ -25,7 +25,7 @@
 
 - Record videos using webcam or upload video files (`.webm`)
 - Analyze user posture frame-by-frame
-- Classify posture correctness using landmark-based logic
+- Classify posture correctness using rule-based logic
 - Support for exercises like squats with custom threshold angles
 - Real-time angle calculation and alerts for improper form
 - Frontend UI that mimics professional workout tracking tools
