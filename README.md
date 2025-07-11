@@ -66,7 +66,7 @@ python app.py
 
 ## Demo Video - 
 
-## Live Link -
+## Live Link - <a href="https://drive.google.com/file/d/1nmi2mo_eY-ct_3-jiVKR3Z-n0Qg9ODon/view?usp=sharing"> Click to see </a>
 
 NOTE: Currently the project only analyzes two postures, 
 i) Squatting Posture
