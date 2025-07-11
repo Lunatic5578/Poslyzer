@@ -64,9 +64,9 @@ pip install -r requirements.txt
 python app.py
 ```
 
-## Demo Video - 
+## Demo Video - <a href="https://drive.google.com/file/d/1nmi2mo_eY-ct_3-jiVKR3Z-n0Qg9ODon/view?usp=sharing"> Click to see </a>
 
-## Live Link - <a href="https://drive.google.com/file/d/1nmi2mo_eY-ct_3-jiVKR3Z-n0Qg9ODon/view?usp=sharing"> Click to see </a>
+## Live Link - 
 
 NOTE: Currently the project only analyzes two postures, 
 i) Squatting Posture
