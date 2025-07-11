@@ -1,0 +1,2 @@
+[build]
+  workdir = "backend/pythonApi"
