@@ -421,9 +421,10 @@ class PostureAPI:
             ]
         })
     
-    def run(self, host='0.0.0.0', port=5001, debug=True):
-        """Run the Flask application"""
-        self.app.run(host=host, port=port, debug=debug)
+   def run(self, host='0.0.0.0', port=None, debug=False):
+    port = int(os.environ.get("PORT", 5001))  # default to 5001 for local dev
+    self.app.run(host=host, port=port, debug=debug)
+
 
 def create_app():
     """Factory function to create the Flask app"""
