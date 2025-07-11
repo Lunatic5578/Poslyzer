@@ -1,2 +1,3 @@
 [build]
-  workdir = "backend/pythonApi"
+workdir = "backend/pythonApi"
+start = "python app.py"

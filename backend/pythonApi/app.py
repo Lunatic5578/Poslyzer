@@ -421,7 +421,7 @@ class PostureAPI:
             ]
         })
     
-   def run(self, host='0.0.0.0', port=None, debug=False):
+def run(self, host='0.0.0.0', port=None, debug=False):
     port = int(os.environ.get("PORT", 5001))  # default to 5001 for local dev
     self.app.run(host=host, port=port, debug=debug)
 
