@@ -252,6 +252,7 @@ class PostureAPI:
     
     def _register_routes(self):
         """Register all API routes"""
+        self.app.route('/', methods=['GET'])(self.root_page) 
         self.app.route('/api/video/analyze', methods=['POST'])(self.analyze_video)
         self.app.route('/api/video/frame', methods=['POST'])(self.analyze_frame)
         self.app.route('/api/video/analyze-squat', methods=['POST'])(self.analyze_squat)
@@ -420,6 +421,22 @@ class PostureAPI:
                 '/health'
             ]
         }),200
+    
+    def root_page(self):
+        """Simple root page to confirm server is live"""
+        return """
+        <html>
+            <head>
+                <title>Posture API</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+                <h1>🎯 Posture Analyzer API is Live!</h1>
+                <p>Welcome to the posture detection server.</p>
+                <p>Visit <code>/health</code> for a full health check.</p>
+            </body>
+        </html>
+        """, 200
+
     
     def run(self, host='0.0.0.0', port=None, debug=False):
         port = int(os.environ.get("PORT", 5001))  # default to 5001 for local dev
