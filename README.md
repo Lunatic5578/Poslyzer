@@ -50,7 +50,7 @@ npm run dev
 ## 3. Set Up Flask API for Pose Analysis
 
 ```bash
-cd ../pythonApi
+cd ../backend/pythonApi
 pip install -r requirements.txt
 python app.py
 ```
