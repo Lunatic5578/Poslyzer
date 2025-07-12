@@ -121,7 +121,7 @@ def analyze_sitting(frame):
             
             # Desk sitting rule: Flag if neck bends >30°
             if neck_bend > 30:
-                feedback.append(f"Neck bending forward: {int(neck_bend)}° (exceeds 30° threshold)")
+                feedback.append(f"Neck bending {int(neck_bend)}° (exceeds 30° threshold)")
         except Exception as e:
             logger.error(f"Neck angle error: {str(e)}")
 
