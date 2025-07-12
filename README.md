@@ -46,14 +46,8 @@ cd frontend
 npm install
 npm run dev
 ```
-##3. Install Backend (Node.js) Dependencies
 
-```bash
-cd ../backend/nodeServer
-npm install
-npm start
-```
-### 4. Set Up Flask API for Pose Analysis
+## 3. Set Up Flask API for Pose Analysis
 
 ```bash
 cd ../pythonApi
