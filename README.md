@@ -13,11 +13,8 @@
 - **Axios** for API communication
 
 ### Backend
-- **Node.js + Express.js** for the main server
 - **Flask + MediaPipe + OpenCV** for frame-by-frame posture analysis
 - **Python** for landmark extraction and pose logic
-- **Multer** for video uploads
-- **FFmpeg** (optional, for processing video formats)
 
 ---
 
