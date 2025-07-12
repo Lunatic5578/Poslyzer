@@ -39,7 +39,7 @@ Follow these steps to run the project locally on your machine:
 git clone https://github.com/Lunatic5578/Poslyzer.git
 cd Poslyzer
 ```
-## 2. Setup Flask and its dependencies
+## 2. Setup frontend and its dependencies
 
 ```bash
 cd frontend
