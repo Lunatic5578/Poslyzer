@@ -3,75 +3,78 @@ import mediapipe as mp
 import math
 import os
 
-# Suppress TensorFlow/MediaPipe warnings
+# Suppress warnings from TensorFlow/MediaPipe
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Initialize MediaPipe modules
+# Setup MediaPipe Pose model
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
+pose = mp_pose.Pose(
+    static_image_mode=True,
+    model_complexity=1,
+    enable_segmentation=False,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
-# Helper function to calculate angle between three points
 def calculate_angle(a, b, c):
-    a = [a.x, a.y]
-    b = [b.x, b.y]
-    c = [c.x, c.y]
-    radians = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])
-    angle = abs(radians * 180.0 / math.pi)
-    return 360 - angle if angle > 180 else angle
+    """Calculate angle at point b formed by segments ab and bc."""
+    if not all([a, b, c]):
+        return None
+    try:
+        a = [a.x, a.y]
+        b = [b.x, b.y]
+        c = [c.x, c.y]
+        angle = math.degrees(
+            math.atan2(c[1] - b[1], c[0] - b[0]) -
+            math.atan2(a[1] - b[1], a[0] - b[0])
+        )
+        angle = abs(angle)
+        return angle if angle <= 180 else 360 - angle
+    except Exception:
+        return None
 
-# Helper function to check visibility confidence
 def is_visible(landmark, threshold=0.5):
-    return landmark.visibility > threshold
+    """Check if a landmark is reliably visible."""
+    return landmark and hasattr(landmark, 'visibility') and landmark.visibility > threshold
 
-# Main squat analysis function
 def analyze_squat(frame):
     feedback = []
 
-    if frame is None or frame.size == 0:
+    if frame is None or not hasattr(frame, 'size') or frame.size == 0:
         return frame, ["Invalid or empty frame received"]
 
     try:
-        # Recreate Pose object inside the function to reset internal state
-        with mp_pose.Pose(static_image_mode=False,
-                          model_complexity=1,
-                          enable_segmentation=False,
-                          min_detection_confidence=0.5,
-                          min_tracking_confidence=0.5) as pose:
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        result = pose.process(rgb_frame)
 
-            # Run pose estimation
-            result = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        if not result.pose_landmarks:
+            return frame, ["Pose landmarks not detected"]
 
-            if result.pose_landmarks:
-                landmarks = result.pose_landmarks.landmark
+        landmarks = result.pose_landmarks.landmark
 
-                # Required landmarks
-                left_knee = landmarks[mp_pose.PoseLandmark.LEFT_KNEE]
-                left_ankle = landmarks[mp_pose.PoseLandmark.LEFT_ANKLE]
-                left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
-                left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
-                left_foot = landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX]
+        try:
+            lk = landmarks[mp_pose.PoseLandmark.LEFT_KNEE]
+            la = landmarks[mp_pose.PoseLandmark.LEFT_ANKLE]
+            lh = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
+            ls = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
+            lf = landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX]
+        except IndexError:
+            return frame, ["Incomplete landmark data received"]
 
-                # Visibility check
-                keypoints = [left_knee, left_ankle, left_hip, left_shoulder, left_foot]
-                if not all(is_visible(kp) for kp in keypoints):
-                    feedback.append("Ensure full body is visible in frame")
-                    return frame, feedback
+        keypoints = [lk, la, lh, ls, lf]
+        if not all(is_visible(kp) for kp in keypoints):
+            return frame, ["Ensure full body is visible in frame"]
 
-                # 1. Knee beyond toe check
-                knee_toe_angle = calculate_angle(left_ankle, left_knee, left_foot)
-                if knee_toe_angle < 150:
-                    feedback.append(f"Knee goes beyond toe: {int(knee_toe_angle)}°")
+        knee_toe_angle = calculate_angle(la, lk, lf)
+        if knee_toe_angle and knee_toe_angle < 150:
+            feedback.append(f"Knee goes beyond toe: {int(knee_toe_angle)}°")
 
-                # 2. Back angle check
-                back_angle = calculate_angle(left_shoulder, left_hip, left_knee)
-                if back_angle < 150:
-                    feedback.append(f"Back too bent: {int(back_angle)}°")
+        back_angle = calculate_angle(ls, lh, lk)
+        if back_angle and back_angle < 150:
+            feedback.append(f"Back too bent: {int(back_angle)}°")
 
-                # Draw pose landmarks
-                mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-            else:
-                feedback.append("Pose landmarks not detected")
+        mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
     except Exception as e:
         feedback.append(f"Analysis failed: {str(e)}")
