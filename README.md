@@ -13,11 +13,8 @@
 - **Axios** for API communication
 
 ### Backend
-- **Node.js + Express.js** for the main server
 - **Flask + MediaPipe + OpenCV** for frame-by-frame posture analysis
 - **Python** for landmark extraction and pose logic
-- **Multer** for video uploads
-- **FFmpeg** (optional, for processing video formats)
 
 ---
 
@@ -42,31 +39,23 @@ Follow these steps to run the project locally on your machine:
 git clone https://github.com/Lunatic5578/Poslyzer.git
 cd Poslyzer
 ```
-##2. Install Frontend Dependencies
+## 2. Setup frontend and its dependencies
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-##3. Install Backend (Node.js) Dependencies
+
+## 3. Set Up Flask API for Pose Analysis
 
 ```bash
-cd ../backend/nodeServer
-npm install
-npm start
-```
-### 4. Set Up Flask API for Pose Analysis
-
-```bash
-cd ../pythonApi
+cd ../backend/pythonApi
 pip install -r requirements.txt
 python app.py
 ```
 
-## Demo Video -  <a href="https://drive.google.com/file/d/1nmi2mo_eY-ct_3-jiVKR3Z-n0Qg9ODon/view?usp=sharing"> Click to see </a>
-
-## Live Link - 
+## Live Link - <a href="https://poslyzer.vercel.app/"> Click to see </a>
 
 NOTE: Currently the project only analyzes two postures, 
 i) Squatting Posture
