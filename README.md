@@ -1,6 +1,6 @@
 # 📐 Poslyzer
 
-**Poslyzer** is a fullstack posture analysis web-application that allows users to upload or record videos of themselves performing movements (like squats) and get real-time feedback on their posture. Built using modern web technologies and AI pose estimation models, Poslyzer aims to assist users in improving their form and preventing injuries—especially useful for fitness and physiotherapy use cases.
+**Poslyzer** is a fullstack posture analysis web-application that allows users to upload or record videos of themselves performing movements (like squats) and get real-time feedback on their posture. Built using modern web technologies with custome rule-based posture evaluation logic. Poslyzer aims to assist users in improving their form and preventing injuries—especially useful for fitness and physiotherapy use cases.
 
 ---
 
