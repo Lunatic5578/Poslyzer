@@ -119,7 +119,9 @@ const RecordPage = () => {
       formData.append("video", file);
       formData.append("mode", recordingMode);
 
-      const response = await fetch("http://localhost:5001/api/video/analyze", {
+      const backendURL = import.meta.env.VITE_BACKEND_URL || `http://localhost:5001`;
+
+      const response = await fetch(backendURL+"/api/video/analyze", {
         method: "POST",
         body: formData,
       });
