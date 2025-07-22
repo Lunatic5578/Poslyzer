@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Pose } from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
 
 const RecordPage = () => {
   const [activeTab, setActiveTab] = useState("webcam");
@@ -14,203 +12,23 @@ const RecordPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [liveVideoStream, setLiveVideoStream] = useState(null);
   const [isLiveAnalysisActive, setIsLiveAnalysisActive] = useState(false);
-  const [poses, setPoses] = useState([]);
-  const [isMediaPipeLoaded, setIsMediaPipeLoaded] = useState(false);
-  const [showPoseOverlay, setShowPoseOverlay] = useState(true);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const poseCanvasRef = useRef(null);
   const frameAnalysisInterval = useRef(null);
-  const poseDetector = useRef(null);
-  const cameraRef = useRef(null);
+  const [feedback, setFeedback] = useState([]);
   const navigate = useNavigate();
 
-  // Initialize MediaPipe Pose
   useEffect(() => {
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      smoothSegmentation: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-    pose.onResults(onPoseResults);
-    poseDetector.current = pose;
-    setIsMediaPipeLoaded(true);
-
-    return () => {
-      pose.close();
-    };
-  }, []);
-
-  const onPoseResults = (results) => {
-    if (results.poseLandmarks) {
-      setPoses(results.poseLandmarks);
-      if (showPoseOverlay) {
-        drawPoseOnCanvas(results.poseLandmarks);
-      } else {
-        // Clear canvas when overlay is hidden
-        const canvas = poseCanvasRef.current;
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-      }
-    } else {
-      setPoses([]);
-    }
-  };
-
-  const drawPoseOnCanvas = (landmarks) => {
-    const canvas = poseCanvasRef.current;
-    const video = videoRef.current;
-    
-    if (!canvas || !video) return;
-
-    const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (landmarks && landmarks.length > 0) {
-      // Define the 15 points we want to detect
-      const keyPoints = {
-        0: 'HEAD', // Nose
-        'NECK': 'NECK', // Midpoint between shoulders (11, 12)
-        11: 'L_SHOULDER',
-        12: 'R_SHOULDER',
-        13: 'L_ELBOW',
-        14: 'R_ELBOW',
-        15: 'L_WRIST',
-        16: 'R_WRIST',
-        'MID_HIP': 'MID_HIP', // Midpoint between hips (23, 24)
-        23: 'L_HIP',
-        24: 'R_HIP',
-        25: 'L_KNEE',
-        26: 'R_KNEE',
-        27: 'L_ANKLE',
-        28: 'R_ANKLE'
-      };
-
-      // Calculate midpoints for Neck and Mid-Hip
-      const neck = landmarks[11] && landmarks[12] ? {
-        x: (landmarks[11].x + landmarks[12].x) / 2,
-        y: (landmarks[11].y + landmarks[12].y) / 2
-      } : null;
-
-      const midHip = landmarks[23] && landmarks[24] ? {
-        x: (landmarks[23].x + landmarks[24].x) / 2,
-        y: (landmarks[23].y + landmarks[24].y) / 2
-      } : null;
-
-      // Define connections between the 15 points
-      const connections = [
-        ['NECK', 11], ['NECK', 12], // Neck to shoulders
-        [11, 13], [13, 15], // Left arm
-        [12, 14], [14, 16], // Right arm
-        ['NECK', 'MID_HIP'], // Neck to mid-hip (torso)
-        ['MID_HIP', 23], ['MID_HIP', 24], // Mid-hip to hips
-        [23, 25], [25, 27], // Left leg
-        [24, 26], [26, 28], // Right leg
-        [0, 'NECK'] // Head to neck
-      ];
-
-      // Draw connections
-      ctx.strokeStyle = '#e5ff00ff';
-      ctx.lineWidth = 8;
-      connections.forEach(([start, end]) => {
-        let startPos, endPos;
-        if (start === 'NECK' && neck) startPos = neck;
-        else if (start === 'MID_HIP' && midHip) startPos = midHip;
-        else if (landmarks[start]) startPos = landmarks[start];
-
-        if (end === 'NECK' && neck) endPos = neck;
-        else if (end === 'MID_HIP' && midHip) endPos = midHip;
-        else if (landmarks[end]) endPos = landmarks[end];
-
-        if (startPos && endPos) {
-          ctx.beginPath();
-          ctx.moveTo(startPos.x * canvas.width, startPos.y * canvas.height);
-          ctx.lineTo(endPos.x * canvas.width, endPos.y * canvas.height);
-          ctx.stroke();
-        }
-      });
-
-      // Draw points
-      ctx.fillStyle = '#FF0000';
-      Object.keys(keyPoints).forEach((key) => {
-        let point;
-        if (key === 'NECK' && neck) point = neck;
-        else if (key === 'MID_HIP' && midHip) point = midHip;
-        else if (landmarks[key]) point = landmarks[key];
-
-        if (point) {
-          ctx.beginPath();
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            7,
-            0,
-            2 * Math.PI
-          );
-          ctx.fill();
-
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = '12px Arial';
-          ctx.fillText(
-            keyPoints[key],
-            point.x * canvas.width + 8,
-            point.y * canvas.height - 8
-          );
-          ctx.fillStyle = '#FF0000';
-        }
-      });
-    }
-  };
-
-  const detectPoseFromVideo = async () => {
-    if (!poseDetector.current || !videoRef.current || videoRef.current.readyState < 2) return;
-    
-    await poseDetector.current.send({ image: videoRef.current });
-  };
-
-  // Handle webcam stream with MediaPipe Camera
-  useEffect(() => {
-    if (isRecording && liveVideoStream && videoRef.current && isMediaPipeLoaded) {
+    if (videoRef.current && liveVideoStream) {
       videoRef.current.srcObject = liveVideoStream;
-      videoRef.current.play().catch((err) => console.error("Webcam video play error:", err));
-
-      cameraRef.current = new Camera(videoRef.current, {
-        onFrame: async () => {
-          if (videoRef.current && isLiveAnalysisActive) {
-            await detectPoseFromVideo();
-          }
-        },
-        width: 640,
-        height: 480,
-      });
-
-      cameraRef.current.start();
-
-      return () => {
-        if (cameraRef.current) {
-          cameraRef.current.stop();
-        }
-      };
+      videoRef.current.play();
     }
-  }, [isRecording, liveVideoStream, isLiveAnalysisActive, isMediaPipeLoaded]);
+  }, [liveVideoStream]);
 
   // Live frame analysis effect
   useEffect(() => {
-    if (isLiveAnalysisActive && videoRef.current && canvasRef.current && liveVideoStream && isMediaPipeLoaded) {
+    if (isLiveAnalysisActive && videoRef.current && canvasRef.current && liveVideoStream) {
       frameAnalysisInterval.current = setInterval(() => {
         const canvas = canvasRef.current;
         const video = videoRef.current;
@@ -225,24 +43,25 @@ const RecordPage = () => {
             const formData = new FormData();
             formData.append("frame", blob);
             formData.append("mode", recordingMode);
-            if (poses && poses.length > 0) {
-              formData.append("poses", JSON.stringify(poses));
-            }
 
-            const backendURL = import.meta.env.VITE_BACKEND_URL || `http://localhost:5001`;
+            const backendURL= import.meta.env.VITE_BACKEND_URL || `http://localhost:5001`
 
             try {
-              const res = await axios.post(backendURL + "/api/video/frame", formData);
+              const res = await axios.post(backendURL+"/api/video/frame", formData);
 
               setLiveFeedback({
                 status: res.data.status || "Analyzing...",
                 details: res.data.feedback || res.data.details || [],
                 score: res.data.score || null
               });
+
+              setFeedback(res.data.feedback || []);
+
             } catch (err) {
               console.error("Live analysis error:", err);
               let errorMsg = "Unable to analyze current frame";
 
+              // Extract error message from backend response
               if (err.response && err.response.data) {
                 if (err.response.data.error) {
                   errorMsg = err.response.data.error;
@@ -269,26 +88,7 @@ const RecordPage = () => {
         }
       };
     }
-  }, [isLiveAnalysisActive, liveVideoStream, recordingMode, poses, isMediaPipeLoaded]);
-
-  // Pose detection for uploaded video
-  useEffect(() => {
-    if (activeTab === "upload" && uploadedVideoURL && videoRef.current && isMediaPipeLoaded) {
-      const video = videoRef.current;
-
-      const handleTimeUpdate = async () => {
-        if (!video.paused && !video.ended) {
-          await detectPoseFromVideo();
-        }
-      };
-
-      video.addEventListener('timeupdate', handleTimeUpdate);
-
-      return () => {
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-      };
-    }
-  }, [uploadedVideoURL, isMediaPipeLoaded, activeTab]);
+  }, [isLiveAnalysisActive, liveVideoStream, recordingMode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -299,14 +99,8 @@ const RecordPage = () => {
       if (liveVideoStream) {
         liveVideoStream.getTracks().forEach((track) => track.stop());
       }
-      if (cameraRef.current) {
-        cameraRef.current.stop();
-      }
-      if (uploadedVideoURL) {
-        URL.revokeObjectURL(uploadedVideoURL);
-      }
     };
-  }, [liveVideoStream, uploadedVideoURL]);
+  }, []);
 
   const handleVideoUpload = async (file) => {
     const localURL = URL.createObjectURL(file);
@@ -314,14 +108,11 @@ const RecordPage = () => {
     setIsAnalyzing(true);
     setLiveFeedback(null);
     setAnalysisResults(null);
-    setPoses([]);
 
     try {
       if (videoRef.current) {
-        videoRef.current.src = localURL;
-        videoRef.current.onloadeddata = () => {
-          videoRef.current.play().catch((err) => console.error("Uploaded video play error:", err));
-        };
+        videoRef.current.load();
+        videoRef.current.play();
       }
 
       const formData = new FormData();
@@ -330,7 +121,7 @@ const RecordPage = () => {
 
       const backendURL = import.meta.env.VITE_BACKEND_URL || `http://localhost:5001`;
 
-       const response = await fetch(backendURL+"/api/video/analyze",{
+      const response = await fetch(backendURL+"/api/video/analyze", {
         method: "POST",
         body: formData,
       });
@@ -340,6 +131,7 @@ const RecordPage = () => {
       const result = await response.json();
       setAnalysisResults(result);
 
+      // Show quick preview of results
       if (result.overall_analysis) {
         setLiveFeedback({
           status: result.overall_analysis.status,
@@ -374,7 +166,7 @@ const RecordPage = () => {
         setIsRecording(true);
         setIsLiveAnalysisActive(true);
       } catch (err) {
-        console.error("Webcam access error:", err);
+        console.error("Webcam access denied", err);
         alert("Could not access webcam.");
       }
     } else {
@@ -385,7 +177,7 @@ const RecordPage = () => {
       setLiveVideoStream(null);
       setIsRecording(false);
       setLiveFeedback(null);
-      setPoses([]);
+      setFeedback([]);
     }
   };
 
@@ -393,18 +185,7 @@ const RecordPage = () => {
     setIsLiveAnalysisActive(!isLiveAnalysisActive);
     if (!isLiveAnalysisActive) {
       setLiveFeedback(null);
-    }
-  };
-
-  const togglePoseOverlay = () => {
-    setShowPoseOverlay(!showPoseOverlay);
-    // Clear canvas when hiding overlay
-    if (!showPoseOverlay === false) {
-      const canvas = poseCanvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      setFeedback([]);
     }
   };
 
@@ -472,18 +253,6 @@ const RecordPage = () => {
               >
                 Upload
               </button>
-              <label className="flex-none flex items-center px-4 py-2 bg-gray-100">
-                <span className="text-sm text-gray-700 mr-2">Pose Overlay</span>
-                <div className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showPoseOverlay}
-                    onChange={togglePoseOverlay}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                </div>
-              </label>
             </div>
           </div>
 
@@ -513,7 +282,7 @@ const RecordPage = () => {
                   />
                 </label>
                 <p className="mt-2 text-xs text-gray-500">
-                  MP4, WebM, or MOV. Max 100MB.
+                  MP4, WebM or MOV. Max 100MB.
                 </p>
               </>
             ) : (
@@ -558,19 +327,12 @@ const RecordPage = () => {
           {/* Video Display */}
           <div className="bg-black flex-1 flex items-center justify-center relative">
             {activeTab === "webcam" && liveVideoStream ? (
-              <div className="relative w-full h-full">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-contain"
-                  autoPlay
-                  muted
-                />
-                <canvas
-                  ref={poseCanvasRef}
-                  className="absolute top-0 left-0 w-full h-full object-contain"
-                  style={{ pointerEvents: 'none', display: showPoseOverlay ? 'block' : 'none' }}
-                />
-              </div>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-contain"
+                autoPlay
+                muted
+              />
             ) : uploadedVideoURL ? (
               <div className="w-full h-full relative">
                 <video
@@ -581,11 +343,6 @@ const RecordPage = () => {
                   autoPlay
                   muted
                 />
-                <canvas
-                  ref={poseCanvasRef}
-                  className="absolute top-0 left-0 w-full h-full object-contain"
-                  style={{ pointerEvents: 'none', display: showPoseOverlay ? 'block' : 'none' }}
-                />
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={() => {
@@ -593,10 +350,8 @@ const RecordPage = () => {
                         videoRef.current.pause();
                         videoRef.current.src = "";
                       }
-                      URL.revokeObjectURL(uploadedVideoURL);
                       setUploadedVideoURL(null);
                       setAnalysisResults(null);
-                      setPoses([]);
                     }}
                     className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded"
                   >
